@@ -25,7 +25,8 @@ func fib(n int) int {
 	return total
 }
 
-func main() {
+func tasks() {
+
 	x, y := getSomeCordinates()
 	fmt.Println("x:", x, "y:", y)
 
@@ -77,5 +78,11 @@ func main() {
 	for key, value := range wordMap {
 		fmt.Printf("Word %s: %d\n", key, value)
 	}
+
+}
+
+func main() {
+
+	NewTodoTui().Start()
 
 }
