@@ -7,6 +7,7 @@ import (
 	"goosy/internal/user"
 	"log"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -21,26 +22,44 @@ func main() {
 	defer cancel()
 
 	d, err := db.New(ctx, dbURL)
+
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	us := user.NewStore(d.Pool)
 
-	createCtx, cancel2 := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel2()
+	// createCtx, cancel2 := context.WithTimeout(context.Background(), 2*time.Second)
+	// defer cancel2()
+	//
+	// newId, err := us.Create(createCtx, "goosy1", "goosy1@mail.com")
 
-	newId, err := us.Create(createCtx, "goosy1", "goosy1@mail.com")
-	if err != nil {
-		log.Fatal(err)
+	// newId, err := us.CreateUserWithAudit(createCtx, "goosy_tx", "goosy_tx@mail.com")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	//
+	// fmt.Println("Inserted user id:", newId)
+
+	var wg sync.WaitGroup
+	for x := range 10 {
+		wg.Go(func() {
+			createCtx, cancel2 := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel2()
+
+			_, err := us.CreateUserWithAudit(createCtx, fmt.Sprintf("user_%d", x), fmt.Sprintf("user_%d@mail.com", x))
+			if err != nil {
+				fmt.Println("create user with audit:", err)
+			}
+		})
 	}
 
-	fmt.Println("Inserted user id:", newId)
+	wg.Wait()
 
 	listCtx, cancel3 := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel3()
 
-	users, err := us.List(listCtx, 10)
+	users, err := us.List(listCtx, 30)
 
 	if err != nil {
 		log.Fatal(err)
